@@ -1,6 +1,6 @@
 # Upcentiles , an analytics api for Upfluence SSE stream datas
 
-** 🧑‍🔬 Still a work in progress**
+**🧑‍🔬 Still a work in progress**
 
 ## 🥅  Goal
 
