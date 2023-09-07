@@ -20,13 +20,13 @@
 
 ## 📓 Methodology
 
-- [ ] Read the goals (the subject)
+- [X] Read the goals (the subject)
 
-- [ ] Upstream API discovery via cli tools (of course it's **curl**)
+- [X] Upstream API discovery via cli tools (of course it's **curl**)
 
-- [ ] Write down data objects models
+- [X] Write down data objects models
 
-- [ ] Implement a draft (quick & dirty) project version with a minimal separation of concerns
+- [X] Implement a draft (quick & dirty) project version with a minimal separation of concerns
 
 - [ ] Re-Read the goals to avoid missing features
 
