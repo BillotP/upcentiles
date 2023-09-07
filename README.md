@@ -8,7 +8,7 @@
 
 - Fetch social media post events from Upfluence SSE api during **x** duration
 
-- Parse the received datas to extract **timestamp** and **y** dimension value
+- Parse the received datas to extract **timestamp** and **y** dimension values
 
 - Get the first and last **timestamp** values of the received datas
 
