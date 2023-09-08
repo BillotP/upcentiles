@@ -1,5 +1,6 @@
 package upfluence
 
+// StreamEvent is the data field from Upfluence SSE stream payload.
 type StreamEvent struct {
 	InstagramMedia *struct {
 		ID                int      `json:"id"`
