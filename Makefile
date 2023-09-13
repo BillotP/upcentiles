@@ -31,7 +31,7 @@ start: ## Start a cmd in background
 	{ PORT=$(PORT) HEALTH_PORT=$(HEALTH_PORT) CMD=$(CMD) go run cmd/$(CMD)/main.go &>"$(LOGS)/$$FOO.log" & }
 	@echo "[INFO] Started $(CMD)"
 
-test: ## Run all unit tests
+test: ## Run all unit tests and get detailled coverage
 	@rm cover.out coverage.html || true
 	@go test -covermode=count -coverprofile=coverage.out -v ./... || true
 	@go tool cover -func coverage.out
