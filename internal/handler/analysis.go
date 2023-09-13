@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -12,36 +13,61 @@ import (
 )
 
 // GetAnalysisHandler is a JSON api handler for GET /analysis route with *duration* and *dimension* query parameters.
-func GetAnalysisHandler(c echo.Context) error {
-	var params = new(api.AnalysisParam)
-	if err := c.Bind(params); err != nil {
-		log.Printf("[ERROR] %s", err.Error())
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{"error": err.Error()})
-	}
-	if err := params.Validate(); err != nil {
-		log.Printf("[ERROR] %s", err.Error())
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{"error": err.Error()})
-	}
-	dd, _ := time.ParseDuration(params.Duration)
-	cc := make(chan *upfluence.StreamEvent)
-	go func() error {
-		if err := upfluence.Subscribe(dd, cc); err != nil {
+func GetAnalysisHandler(verbose bool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		var params = new(api.AnalysisParam)
+		if err := c.Bind(params); err != nil {
 			log.Printf("[ERROR] %s", err.Error())
-			return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": err.Error()})
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 		}
-		return nil
-	}()
 
-	var datas = []*upfluence.StreamEvent{}
+		if err := params.Validate(); err != nil {
+			log.Printf("[ERROR] %s", err.Error())
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+		}
+		// No need to check error as duration has already been check by Validate()
+		dd, _ := time.ParseDuration(params.Duration)
+		cc := make(chan *upfluence.AnalysisValue)
 
-	var out = api.AnalysisResponse{}
+		if verbose {
+			log.Printf("[INFO] Will compute analysis for %s duration on %s dimension\n", params.Duration, params.Dimension)
+		}
+		go func() error {
+			if err := upfluence.SubscribeLight(verbose, dd, params.Dimension, cc); err != nil {
+				log.Printf("[ERROR] %s", err.Error())
+				// Should return a more succint error to consumer to avoid leaking program  internal errors
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			}
 
-	for ev := range cc {
-		datas = append(datas, ev)
+			return nil
+		}()
+
+		var timestamps = []int{}
+
+		var values = []int{}
+
+		for ev := range cc {
+			timestamps = append(timestamps, ev.Timestamp)
+			values = append(values, ev.DimensionValue)
+		}
+
+		if verbose {
+			fmt.Printf("[INFO] Got %d events with values %+v\n", len(values), values)
+		}
+
+		if len(timestamps) == 0 {
+			return c.NoContent(http.StatusNoContent)
+		}
+
+		var out = api.AnalysisResponse{
+			TotalPosts:   len(timestamps) - 1,
+			MinTimestamp: timestamps[0],
+			MaxTimestamp: timestamps[len(timestamps)-1],
+		}
+
+		percentiles := stats.Percentiles(verbose, values)
+		out.FillPercentiles(params.Dimension, percentiles)
+
+		return c.JSON(http.StatusOK, out)
 	}
-	out.TotalPosts = uint64(len(datas) - 1)
-	out.MinTimestamp = datas[0].Timestamp()
-	out.MaxTimestamp = datas[len(datas)-1].Timestamp()
-	out.Fill(params.Dimension, stats.Percentiles(params.Dimension, datas))
-	return c.JSON(http.StatusOK, out)
 }
