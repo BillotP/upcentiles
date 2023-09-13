@@ -37,6 +37,9 @@ test: ## Run all unit tests and get detailled coverage
 	@go tool cover -func coverage.out
 	@go tool cover -html=coverage.out -o coverage.html
 
+benchmark: ## Run the stats package benchmarks
+	@go test -bench=. ./...
+
 lint: ## Run golangci-lint with the Upfluence config
 	@$(DOCKER) run -t --rm -v $(shell pwd):/app -w /app "docker.io/golangci/golangci-lint:latest-alpine" golangci-lint run -v
 
