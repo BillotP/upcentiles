@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"upcentile/internal/api"
@@ -10,12 +11,16 @@ import (
 )
 
 var defaultPort = "8080"
+var VerboseFlag = flag.Bool("verbose", false, "Make the operations more talkative")
 
 func main() {
+	flag.Parse()
+
 	var srv = echo.New()
 	srv.HideBanner = true
 	srv.HidePort = true
-	srv.GET("/analysis", handler.GetAnalysisHandler)
+	srv.GET("/analysis", handler.GetAnalysisHandler(*VerboseFlag))
+
 	log.Printf("[INFO] server v%s listening on port %s", api.VERSION, defaultPort)
 	err := srv.Start(":" + defaultPort)
 
